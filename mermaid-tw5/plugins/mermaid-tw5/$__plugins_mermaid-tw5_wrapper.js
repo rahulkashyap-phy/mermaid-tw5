@@ -157,6 +157,7 @@ modified: E Furlan 2022-05-08
             // requestAnimationFrame ensures the browser has laid out the DOM for text measurement
             var renderId = 'mermaid-render-' + divNode.id;
             var isRendered = false;
+            var printImg = null;
             var performRender = function() {
                 if (isRendered) return;
                 // Skip if divNode has been removed from the document (widget destroyed)
@@ -173,11 +174,44 @@ modified: E Furlan 2022-05-08
                 });
             };
             requestAnimationFrame(performRender);
-            // Ensure the diagram is rendered before the browser prepares the print layout.
-            // Without this, requestAnimationFrame may not have fired yet when the print
-            // view is being built, causing mermaid's getBoundingClientRect call to fail on
-            // an element that has not yet been laid out.
-            window.addEventListener('beforeprint', performRender, { once: true });
+            // Before printing, replace the SVG with a static <img> using a data URL so
+            // that the diagram renders correctly in PDF/print output.  Inline SVGs that
+            // were injected via innerHTML are often omitted or mis-rendered by browsers
+            // and PDF viewers when printing.  Converting to an <img> at print time (a
+            // synchronous operation on an already-rendered SVG) avoids this problem.
+            // If the diagram has not yet been rendered we trigger performRender so it
+            // will be available for any subsequent print attempt.
+            var onBeforePrint = function() {
+                // Guard against multiple rapid print events overwriting printImg before
+                // the paired afterprint has had a chance to clean up.
+                if (printImg) { return; }
+                var svg = divNode.querySelector('svg');
+                if (svg) {
+                    var svgData = new XMLSerializer().serializeToString(svg);
+                    printImg = divNode.ownerDocument.createElement('img');
+                    printImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+                    printImg.style.maxWidth = '100%';
+                    printImg.style.height = 'auto';
+                    svg.style.display = 'none';
+                    divNode.insertBefore(printImg, svg);
+                } else {
+                    performRender();
+                }
+            };
+            // After printing, remove the temporary <img> and restore the SVG.
+            var onAfterPrint = function() {
+                if (printImg) {
+                    var svg = divNode.querySelector('svg');
+                    if (svg) { svg.style.display = ''; }
+                    if (printImg.parentNode) { printImg.parentNode.removeChild(printImg); }
+                    printImg = null;
+                }
+            };
+            window.addEventListener('beforeprint', onBeforePrint);
+            window.addEventListener('afterprint', onAfterPrint);
+            // Store cleanup references on the divNode so the destroy handler can reach them.
+            divNode._onBeforePrint = onBeforePrint;
+            divNode._onAfterPrint = onAfterPrint;
 
         } catch (ex) {
             divNode.innerText = ex;
@@ -194,6 +228,21 @@ modified: E Furlan 2022-05-08
     */
     MermaidWidget.prototype.refresh = function(changedTiddlers) {
         return false;
+    };
+    /*
+    Remove window-level print event listeners to prevent accumulation when
+    the widget is destroyed or recreated by TiddlyWiki's render pipeline.
+    */
+    MermaidWidget.prototype.destroy = function() {
+        var divNode = this.domNodes && this.domNodes[0];
+        if (divNode) {
+            if (divNode._onBeforePrint) {
+                window.removeEventListener('beforeprint', divNode._onBeforePrint);
+            }
+            if (divNode._onAfterPrint) {
+                window.removeEventListener('afterprint', divNode._onAfterPrint);
+            }
+        }
     };
     exports.mermaid = MermaidWidget;
 })();
