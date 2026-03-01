@@ -20,15 +20,17 @@ modified: E Furlan 2022-05-08
         // by fkmiec 2023-05-21
         var d3 = require("$:/plugins/orange/mermaid-tw5/d3.v6.min.js");
 
-    function _exportSVGAsPNG(svgElement) {
+    function _exportSVGAsPNG(svgElement, diagramId) {
         var svgData = new XMLSerializer().serializeToString(svgElement);
         var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
         var url = URL.createObjectURL(svgBlob);
         var img = new Image();
         img.onload = function() {
             var canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth * 2;
-            canvas.height = img.naturalHeight * 2;
+            // Scale 2x for high-DPI / retina display clarity
+            var scaleFactor = 2;
+            canvas.width = img.naturalWidth * scaleFactor;
+            canvas.height = img.naturalHeight * scaleFactor;
             var ctx = canvas.getContext("2d");
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -36,7 +38,7 @@ modified: E Furlan 2022-05-08
             URL.revokeObjectURL(url);
             var pngUrl = canvas.toDataURL("image/png");
             var link = document.createElement("a");
-            link.download = "mermaid-diagram.png";
+            link.download = "mermaid-" + (diagramId || "diagram") + ".png";
             link.href = pngUrl;
             link.click();
         };
@@ -56,10 +58,13 @@ modified: E Furlan 2022-05-08
             printWindow.document.close();
             printWindow.focus();
             printWindow.print();
+        } else {
+            alert("Please allow popups to save as PDF.");
         }
     }
 
     function _addExportButtons(containerNode) {
+        var diagramId = containerNode.id;
         var toolbar = containerNode.ownerDocument.createElement("div");
         toolbar.className = "mermaid-export-toolbar";
         toolbar.setAttribute("style",
@@ -71,7 +76,7 @@ modified: E Furlan 2022-05-08
         btnPNG.addEventListener("click", function(e) {
             e.stopPropagation();
             var svg = containerNode.querySelector("svg");
-            if (svg) _exportSVGAsPNG(svg);
+            if (svg) _exportSVGAsPNG(svg, diagramId);
         });
         var btnPDF = containerNode.ownerDocument.createElement("button");
         btnPDF.textContent = "Save as PDF";
@@ -146,9 +151,9 @@ modified: E Furlan 2022-05-08
 
             // Mermaid 11.x render is async (returns a Promise)
             // Use a unique render ID and render inside divNode container
-            // setTimeout ensures the browser has laid out the DOM for text measurement
+            // requestAnimationFrame ensures the browser has laid out the DOM for text measurement
             var renderId = 'mermaid-render-' + divNode.id;
-            setTimeout(function() {
+            requestAnimationFrame(function() {
                 mermaid.render(renderId, scriptBody, divNode).then(function(result) {
                     divNode.innerHTML = result.svg;
                     if (result.bindFunctions) {
@@ -156,9 +161,9 @@ modified: E Furlan 2022-05-08
                     }
                     _addExportButtons(divNode);
                 }).catch(function(err) {
-                    divNode.innerText = String(err);
+                    divNode.innerText = err.message || String(err);
                 });
-            }, 0);
+            });
 
         } catch (ex) {
             divNode.innerText = ex;
