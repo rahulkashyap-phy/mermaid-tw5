@@ -1,0 +1,36 @@
+title: $:/plugins/orange/mermaid-tw5/example-sankey
+
+!Sankey Diagram
+
+Notation:
+
+```
+sankey-beta
+
+Agricultural waste,Bio-energy,124.729
+Bio-energy,Electricity grid,29.544
+Bio-energy,Losses,29.544
+Bio-energy,Industry,65.641
+Oil imports,Oil,504.287
+Oil,Industry,100.000
+Oil,Heating and cooling,50.000
+Oil,Road transport,200.000
+Oil,Losses,154.287
+```
+
+Results
+
+<$mermaid text="
+sankey-beta
+
+Agricultural waste,Bio-energy,124.729
+Bio-energy,Electricity grid,29.544
+Bio-energy,Losses,29.544
+Bio-energy,Industry,65.641
+Oil imports,Oil,504.287
+Oil,Industry,100.000
+Oil,Heating and cooling,50.000
+Oil,Road transport,200.000
+Oil,Losses,154.287
+"></$mermaid>
+

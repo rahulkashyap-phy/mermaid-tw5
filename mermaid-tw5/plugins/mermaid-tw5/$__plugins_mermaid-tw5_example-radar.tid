@@ -1,0 +1,24 @@
+title: $:/plugins/orange/mermaid-tw5/example-radar
+
+!Radar Chart
+
+Notation:
+
+```
+radar-beta
+    title Student Skills
+    axis Math, Science, English, History, Art
+    curve a: 90, 85, 70, 60, 95
+    curve b: 75, 90, 80, 85, 70
+```
+
+Results
+
+<$mermaid text="
+radar-beta
+    title Student Skills
+    axis Math, Science, English, History, Art
+    curve a: 90, 85, 70, 60, 95
+    curve b: 75, 90, 80, 85, 70
+"></$mermaid>
+

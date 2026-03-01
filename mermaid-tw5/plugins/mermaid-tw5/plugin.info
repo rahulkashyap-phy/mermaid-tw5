@@ -4,11 +4,11 @@
     "created": "",
     "dependents": "",
     "description": "wrapper for the Mermaid diagramming library",
-    "list": "readme usage example license",
+    "list": "readme usage example example-timeline example-sankey example-xychart example-radar license",
     "modified": "",
     "name": "Mermaid",
     "plugin-type": "plugin",
     "tags": "",
     "title": "$:/plugins/orange/mermaid-tw5",
-    "version": "0.3.8"
+    "version": "0.4.0"
 }
