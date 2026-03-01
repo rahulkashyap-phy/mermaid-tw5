@@ -128,10 +128,9 @@ modified: E Furlan 2022-05-08
 
             divNode.addEventListener('click', function() {
                 if(!zoomEventListenersApplied) {
-                    var id = Date.now().toString(36);
-                    var svgEl = this.firstChild;
-                    svgEl.setAttribute("id",id);
-                    var svg = d3.select("#" + id);
+                    var svgEl = this.querySelector("svg");
+                    if (!svgEl) return;
+                    var svg = d3.select(svgEl);
                     // Use DOM manipulation instead of HTML serialization to preserve styles
                     var gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     while (svgEl.childNodes.length > 0) {
