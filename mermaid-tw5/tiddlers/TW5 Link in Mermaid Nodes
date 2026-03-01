@@ -1,0 +1,3 @@
+flowchart LR
+    A["[[Flowchart]]"] --> B["[[Gitgraph Base Theme|Git Base]]"] --> C["[[sequenceDiagram 1]]"]
+    D["[[Automata]]"] --> E["[[Class diagrams]]"]

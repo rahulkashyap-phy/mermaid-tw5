@@ -1,5 +1,23 @@
 title: $:/plugins/orange/mermaid-tw5/usage
 
+!Linking nodes to tiddlers
+
+You can make any node in a flowchart a clickable link to another tiddler by placing a TW5 wiki-link inside the node's label text.  Two forms are supported:
+
+* `[[TiddlerName]]` — the node label shows "TiddlerName" and clicking opens that tiddler.
+* `[[TiddlerName|Display Text]]` — the node label shows "Display Text" and clicking opens "TiddlerName".
+
+Example:
+
+```
+flowchart LR
+    A["[[My Source Tiddler]]"] --> B["[[My Target|Go to target]]"]
+```
+
+The `[[...]]` syntax is recognised only when it appears inside a quoted label string (single or double quotes).  Bare mermaid subroutine shapes `A[[text]]` are not affected.  This feature works for any node-based diagram type (flowchart, graph, state diagram, etc.) that supports mermaid's `click` directive.
+
+See [[TW5 Link in Mermaid Nodes]] for a working demonstration.
+
 !mermaid
 
 Use the ``<$mermaid>`` widget and place the mermaid commands within it. Any of the options that can be specified in the ``.render()`` options variable can be specified as JSON-encoded values in attributes of the same name on the widgets.

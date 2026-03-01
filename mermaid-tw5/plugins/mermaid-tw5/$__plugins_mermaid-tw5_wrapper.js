@@ -96,6 +96,112 @@ modified: E Furlan 2022-05-08
         });
     }
 
+    /*
+    Pre-process mermaid source text to convert TW5 wiki-link syntax in node
+    labels into mermaid click directives.
+
+    Supported syntaxes inside quoted node label text:
+      [[TiddlerName]]           → displays "TiddlerName", clicks open tiddler
+      [[TiddlerName|Display]]   → displays "Display",     clicks open tiddler
+
+    Only [[...]] patterns that appear inside single- or double-quoted label
+    strings are processed.  Bare [[...]] used for mermaid's subroutine shape
+    (e.g. A[[text]]) are left untouched.
+
+    For each affected node a  click NodeId "#TiddlerName" "TiddlerName"
+    directive is appended to the diagram source so mermaid handles navigation
+    through its normal click mechanism (requires securityLevel:'loose').
+    */
+    function preprocessTiddlerLinks(text) {
+        if (text.indexOf('[[') === -1) return text;
+
+        var clickDirectives = [];
+        // Keywords that start diagram-level lines – we must not treat them as node IDs
+        var mermaidKeywords = [
+            'graph', 'flowchart', 'subgraph', 'end', 'classdef', 'class',
+            'click', 'note', 'participant', 'actor', 'loop', 'alt', 'else',
+            'opt', 'par', 'and', 'critical', 'option', 'break', 'rect',
+            'link', 'direction', 'sequencediagram', 'statediagram',
+            'erdiagram', 'gantt', 'pie', 'mindmap', 'timeline', 'state',
+            'section', 'title'
+        ];
+
+        var lines = text.split('\n');
+        var processed = lines.map(function(line) {
+            if (line.indexOf('[[') === -1) return line;
+
+            var newLine = line;
+            // Walk every quoted string in the line independently so that
+            // multiple nodes on the same line (e.g. A["[[X]]"] --> B["[[Y]]"])
+            // each get their own click directive.
+            var quoteRegex = /"([^"]*)"|'([^']*)'/g;
+            var m;
+            while ((m = quoteRegex.exec(line)) !== null) {
+                var content = m[1] !== undefined ? m[1] : m[2];
+                var quote   = m[1] !== undefined ? '"' : "'";
+                if (content.indexOf('[[') === -1) continue;
+
+                // Look backwards from the opening quote to find the nearest node ID.
+                // A node definition has the form:  nodeId[  nodeId(  nodeId{  nodeId>
+                // Use the LAST match so that, on a line like A["[[X]]"] --> B["[[Y]]"],
+                // B is correctly identified as the owner of the second quoted string.
+                var textBefore = line.substring(0, m.index);
+                var nodeIdPattern = /([A-Za-z0-9_][A-Za-z0-9_-]*)\s*[\[({>]/g;
+                var nim, lastNodeId = null;
+                while ((nim = nodeIdPattern.exec(textBefore)) !== null) {
+                    if (mermaidKeywords.indexOf(nim[1].toLowerCase()) === -1) {
+                        lastNodeId = nim[1];
+                    }
+                }
+                if (!lastNodeId) continue;
+                var nodeId = lastNodeId;
+
+                var firstTarget = null;
+                var newContent = content.replace(
+                    /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g,
+                    function(lm, target, display) {
+                        target = target.trim();
+                        if (firstTarget === null) firstTarget = target;
+                        return display ? display.trim() : target;
+                    }
+                );
+
+                if (firstTarget !== null) {
+                    // Substitute the cleaned label in the working copy of the line.
+                    // Use indexOf to avoid replacing an identical string at a wrong position.
+                    var idx = newLine.indexOf(m[0]);
+                    if (idx !== -1) {
+                        newLine = newLine.substring(0, idx) +
+                                  quote + newContent + quote +
+                                  newLine.substring(idx + m[0].length);
+                    }
+
+                    var safeTarget = firstTarget.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                    // Skip if a click directive for this node already exists in the
+                    // original source or in our pending list.
+                    var clickRe = new RegExp('\\bclick\\s+' + nodeId + '\\s');
+                    var alreadyInSource = clickRe.test(text);
+                    var alreadyPending  = clickDirectives.some(function(d) {
+                        return d.indexOf('click ' + nodeId + ' ') === 0;
+                    });
+                    if (!alreadyInSource && !alreadyPending) {
+                        clickDirectives.push(
+                            'click ' + nodeId + ' "#' + safeTarget + '" "' + safeTarget + '"'
+                        );
+                    }
+                }
+            }
+
+            return newLine;
+        }).join('\n');
+
+        if (clickDirectives.length > 0) {
+            processed += '\n' + clickDirectives.join('\n');
+        }
+
+        return processed;
+    }
+
     let MermaidWidget = function(parseTreeNode, options) {
         this.initialise(parseTreeNode, options);
     };
@@ -106,7 +212,7 @@ modified: E Furlan 2022-05-08
         this.computeAttributes();
         this.execute();
         var tag = "mermaid",
-            scriptBody = rocklib.getScriptBody(this, "text"),
+            scriptBody = preprocessTiddlerLinks(rocklib.getScriptBody(this, "text")),
             divNode = rocklib.getCanvas(this, tag);
         try {
             let options = {
