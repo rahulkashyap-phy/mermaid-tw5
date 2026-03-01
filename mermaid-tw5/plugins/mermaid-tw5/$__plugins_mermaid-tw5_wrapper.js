@@ -163,7 +163,7 @@ modified: E Furlan 2022-05-08
                 // Skip if divNode has been removed from the document (widget destroyed)
                 if (!divNode.ownerDocument.body.contains(divNode)) return;
                 isRendered = true;
-                mermaid.render(renderId, scriptBody, divNode).then(function(result) {
+                mermaid.render(renderId, scriptBody).then(function(result) {
                     divNode.innerHTML = result.svg;
                     if (result.bindFunctions) {
                         result.bindFunctions(divNode);
