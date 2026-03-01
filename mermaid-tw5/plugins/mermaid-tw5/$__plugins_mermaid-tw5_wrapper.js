@@ -132,7 +132,7 @@ modified: E Furlan 2022-05-08
                     if (!svgEl) return;
                     var svg = d3.select(svgEl);
                     // Use DOM manipulation instead of HTML serialization to preserve styles
-                    var gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    var gElement = svgEl.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "g");
                     while (svgEl.childNodes.length > 0) {
                         gElement.appendChild(svgEl.childNodes[0]);
                     }
@@ -161,7 +161,7 @@ modified: E Furlan 2022-05-08
             var performRender = function() {
                 if (isRendered) return;
                 // Skip if divNode has been removed from the document (widget destroyed)
-                if (!document.body.contains(divNode)) return;
+                if (!divNode.ownerDocument.body.contains(divNode)) return;
                 isRendered = true;
                 mermaid.render(renderId, scriptBody, divNode).then(function(result) {
                     divNode.innerHTML = result.svg;
@@ -220,11 +220,13 @@ modified: E Furlan 2022-05-08
                     if (svg) { svg.style.display = ''; }
                 }
             };
-            window.addEventListener('beforeprint', onBeforePrint);
-            window.addEventListener('afterprint', onAfterPrint);
+            var targetWindow = divNode.ownerDocument.defaultView;
+            targetWindow.addEventListener('beforeprint', onBeforePrint);
+            targetWindow.addEventListener('afterprint', onAfterPrint);
             // Store cleanup references on the divNode so the destroy handler can reach them.
             divNode._onBeforePrint = onBeforePrint;
             divNode._onAfterPrint = onAfterPrint;
+            divNode._printWindow = targetWindow;
 
         } catch (ex) {
             divNode.innerText = ex;
@@ -249,11 +251,12 @@ modified: E Furlan 2022-05-08
     MermaidWidget.prototype.destroy = function() {
         var divNode = this.domNodes && this.domNodes[0];
         if (divNode) {
+            var targetWindow = divNode._printWindow || divNode.ownerDocument.defaultView;
             if (divNode._onBeforePrint) {
-                window.removeEventListener('beforeprint', divNode._onBeforePrint);
+                targetWindow.removeEventListener('beforeprint', divNode._onBeforePrint);
             }
             if (divNode._onAfterPrint) {
-                window.removeEventListener('afterprint', divNode._onAfterPrint);
+                targetWindow.removeEventListener('afterprint', divNode._onAfterPrint);
             }
         }
     };
