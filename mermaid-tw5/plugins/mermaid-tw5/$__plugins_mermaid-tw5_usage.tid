@@ -22,6 +22,19 @@ $$$
 
 Added the d3.v6.min.js library that allows click interactions as well as pan and zoom functionality.
 
+!Markdown Tiddlers
+
+When the [[tiddlywiki/markdown|https://tiddlywiki.com/plugins/tiddlywiki/markdown/]] plugin is also installed, you can use standard fenced code blocks with the ``mermaid`` language tag in Markdown tiddlers (type ``text/x-markdown`` or ``text/markdown``):
+
+```
+```mermaid
+graph TD
+    A --> B
+```
+```
+
+See [[Markdown Mermaid Example]] for a working demonstration.
+
 
 !Troubleshooting
 
