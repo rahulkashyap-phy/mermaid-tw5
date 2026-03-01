@@ -22,8 +22,6 @@ modified: E Furlan 2022-05-08
 
     function _exportSVGAsPNG(svgElement, diagramId) {
         var svgData = new XMLSerializer().serializeToString(svgElement);
-        var svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-        var url = URL.createObjectURL(svgBlob);
         var img = new Image();
         img.onload = function() {
             var canvas = document.createElement("canvas");
@@ -35,14 +33,14 @@ modified: E Furlan 2022-05-08
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(url);
             var pngUrl = canvas.toDataURL("image/png");
             var link = document.createElement("a");
             link.download = "mermaid-" + (diagramId || "diagram") + ".png";
             link.href = pngUrl;
             link.click();
         };
-        img.src = url;
+        // Use data URL instead of Blob URL to avoid tainted canvas SecurityError
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgData);
     }
 
     function _exportSVGAsPDF(svgElement) {
@@ -131,9 +129,15 @@ modified: E Furlan 2022-05-08
             divNode.addEventListener('click', function() {
                 if(!zoomEventListenersApplied) {
                     var id = Date.now().toString(36);
-                    this.firstChild.setAttribute("id",id);
+                    var svgEl = this.firstChild;
+                    svgEl.setAttribute("id",id);
                     var svg = d3.select("#" + id);
-                    svg.html("<g>" + svg.html() + "</g>");
+                    // Use DOM manipulation instead of HTML serialization to preserve styles
+                    var gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    while (svgEl.childNodes.length > 0) {
+                        gElement.appendChild(svgEl.childNodes[0]);
+                    }
+                    svgEl.appendChild(gElement);
                     var inner = svg.select("g");
                     var zoom = d3.zoom().filter(() => isZoomEnabled).on("zoom", function(event) {
                         inner.attr("transform", event.transform);
