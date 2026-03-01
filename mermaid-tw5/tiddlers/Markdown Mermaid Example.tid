@@ -1,0 +1,25 @@
+created: 20240101000000000
+modified: 20240101000000000
+tags: 
+title: Markdown Mermaid Example
+type: text/x-markdown
+
+# Mermaid in Markdown Tiddlers
+
+When the `tiddlywiki/markdown` plugin is installed alongside this plugin, you can embed mermaid diagrams directly in markdown tiddlers using fenced code blocks:
+
+```mermaid
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Check plugins]
+    D --> B
+```
+
+Sequence diagrams also work:
+
+```mermaid
+sequenceDiagram
+    Alice->>Bob: Hello Bob!
+    Bob-->>Alice: Hello Alice!
+```
