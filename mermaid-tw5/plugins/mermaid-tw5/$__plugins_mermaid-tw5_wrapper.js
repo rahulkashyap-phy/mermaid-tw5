@@ -156,12 +156,7 @@ modified: E Furlan 2022-05-08
             // Use a unique render ID and render inside divNode container
             // requestAnimationFrame ensures the browser has laid out the DOM for text measurement
             var renderId = 'mermaid-render-' + divNode.id;
-            var isRendered = false;
-            var performRender = function() {
-                if (isRendered) return;
-                // Skip if divNode has been removed from the document (widget destroyed)
-                if (!document.body.contains(divNode)) return;
-                isRendered = true;
+            requestAnimationFrame(function() {
                 mermaid.render(renderId, scriptBody, divNode).then(function(result) {
                     divNode.innerHTML = result.svg;
                     if (result.bindFunctions) {
@@ -171,13 +166,7 @@ modified: E Furlan 2022-05-08
                 }).catch(function(err) {
                     divNode.innerText = err.message || String(err);
                 });
-            };
-            requestAnimationFrame(performRender);
-            // Ensure the diagram is rendered before the browser prepares the print layout.
-            // Without this, requestAnimationFrame may not have fired yet when the print
-            // view is being built, causing mermaid's getBoundingClientRect call to fail on
-            // an element that has not yet been laid out.
-            window.addEventListener('beforeprint', performRender, { once: true });
+            });
 
         } catch (ex) {
             divNode.innerText = ex;
