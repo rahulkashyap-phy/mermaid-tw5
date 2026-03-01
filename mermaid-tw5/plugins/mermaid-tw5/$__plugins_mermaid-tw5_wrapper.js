@@ -132,7 +132,7 @@ modified: E Furlan 2022-05-08
                     if (!svgEl) return;
                     var svg = d3.select(svgEl);
                     // Use DOM manipulation instead of HTML serialization to preserve styles
-                    var gElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    var gElement = svgEl.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "g");
                     while (svgEl.childNodes.length > 0) {
                         gElement.appendChild(svgEl.childNodes[0]);
                     }
@@ -161,57 +161,72 @@ modified: E Furlan 2022-05-08
             var performRender = function() {
                 if (isRendered) return;
                 // Skip if divNode has been removed from the document (widget destroyed)
-                if (!document.body.contains(divNode)) return;
+                if (!divNode.ownerDocument.body.contains(divNode)) return;
                 isRendered = true;
-                mermaid.render(renderId, scriptBody, divNode).then(function(result) {
+                mermaid.render(renderId, scriptBody).then(function(result) {
                     divNode.innerHTML = result.svg;
                     if (result.bindFunctions) {
                         result.bindFunctions(divNode);
                     }
                     _addExportButtons(divNode);
+                    // Pre-create a hidden <img> with the SVG serialized as a data URL.
+                    // Pre-loading ensures the image is fully decoded before any print
+                    // event fires (including from PrintRiver's popup window), avoiding
+                    // the blank-image timing issue that occurs when img.src is set only
+                    // inside the beforeprint handler.
+                    var svgEl = divNode.querySelector('svg');
+                    if (svgEl) {
+                        var svgData = new XMLSerializer().serializeToString(svgEl);
+                        printImg = divNode.ownerDocument.createElement('img');
+                        printImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+                        printImg.style.cssText = 'display:none;max-width:100%;height:auto;';
+                        divNode.insertBefore(printImg, svgEl);
+                    }
                 }).catch(function(err) {
                     divNode.innerText = err.message || String(err);
                 });
             };
             requestAnimationFrame(performRender);
-            // Before printing, replace the SVG with a static <img> using a data URL so
-            // that the diagram renders correctly in PDF/print output.  Inline SVGs that
-            // were injected via innerHTML are often omitted or mis-rendered by browsers
-            // and PDF viewers when printing.  Converting to an <img> at print time (a
-            // synchronous operation on an already-rendered SVG) avoids this problem.
-            // If the diagram has not yet been rendered we trigger performRender so it
-            // will be available for any subsequent print attempt.
+            // Before printing, show the pre-loaded <img> and hide the SVG so that the
+            // diagram renders correctly in PDF/print output.  Inline SVGs injected via
+            // innerHTML are often omitted or mis-rendered by browsers and PDF viewers
+            // when printing; a pre-loaded <img> with an SVG data URL is reliable.
+            // If the diagram has not yet rendered (printImg is null) we attempt to
+            // render it now so it will be available for any subsequent print attempt.
             var onBeforePrint = function() {
-                // Guard against multiple rapid print events overwriting printImg before
-                // the paired afterprint has had a chance to clean up.
-                if (printImg) { return; }
                 var svg = divNode.querySelector('svg');
-                if (svg) {
+                if (printImg) {
+                    // Pre-loaded image is ready — just toggle visibility.
+                    if (svg) { svg.style.display = 'none'; }
+                    printImg.style.display = '';
+                } else if (svg) {
+                    // Diagram rendered but pre-image not yet available (rare fallback).
                     var svgData = new XMLSerializer().serializeToString(svg);
                     printImg = divNode.ownerDocument.createElement('img');
                     printImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-                    printImg.style.maxWidth = '100%';
-                    printImg.style.height = 'auto';
+                    printImg.style.cssText = 'max-width:100%;height:auto;';
                     svg.style.display = 'none';
                     divNode.insertBefore(printImg, svg);
                 } else {
+                    // Diagram not yet rendered — trigger render for a future print attempt.
                     performRender();
                 }
             };
-            // After printing, remove the temporary <img> and restore the SVG.
+            // After printing, hide the <img> and restore the SVG.
             var onAfterPrint = function() {
                 if (printImg) {
+                    printImg.style.display = 'none';
                     var svg = divNode.querySelector('svg');
                     if (svg) { svg.style.display = ''; }
-                    if (printImg.parentNode) { printImg.parentNode.removeChild(printImg); }
-                    printImg = null;
                 }
             };
-            window.addEventListener('beforeprint', onBeforePrint);
-            window.addEventListener('afterprint', onAfterPrint);
+            var targetWindow = divNode.ownerDocument.defaultView;
+            targetWindow.addEventListener('beforeprint', onBeforePrint);
+            targetWindow.addEventListener('afterprint', onAfterPrint);
             // Store cleanup references on the divNode so the destroy handler can reach them.
             divNode._onBeforePrint = onBeforePrint;
             divNode._onAfterPrint = onAfterPrint;
+            divNode._printWindow = targetWindow;
 
         } catch (ex) {
             divNode.innerText = ex;
@@ -236,11 +251,12 @@ modified: E Furlan 2022-05-08
     MermaidWidget.prototype.destroy = function() {
         var divNode = this.domNodes && this.domNodes[0];
         if (divNode) {
+            var targetWindow = divNode._printWindow || divNode.ownerDocument.defaultView;
             if (divNode._onBeforePrint) {
-                window.removeEventListener('beforeprint', divNode._onBeforePrint);
+                targetWindow.removeEventListener('beforeprint', divNode._onBeforePrint);
             }
             if (divNode._onAfterPrint) {
-                window.removeEventListener('afterprint', divNode._onAfterPrint);
+                targetWindow.removeEventListener('afterprint', divNode._onAfterPrint);
             }
         }
     };
