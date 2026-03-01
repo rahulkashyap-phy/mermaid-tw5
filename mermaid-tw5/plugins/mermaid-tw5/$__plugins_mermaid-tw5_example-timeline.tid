@@ -1,0 +1,28 @@
+title: $:/plugins/orange/mermaid-tw5/example-timeline
+
+!Timeline Diagram
+
+Notation:
+
+```
+timeline
+    title History of Social Media Platform
+    2002 : LinkedIn
+    2004 : Facebook
+         : Google
+    2005 : YouTube
+    2006 : Twitter
+```
+
+Results
+
+<$mermaid text="
+timeline
+    title History of Social Media Platform
+    2002 : LinkedIn
+    2004 : Facebook
+         : Google
+    2005 : YouTube
+    2006 : Twitter
+"></$mermaid>
+

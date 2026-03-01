@@ -36,6 +36,50 @@ graph TD
 See [[Markdown Mermaid Example]] for a working demonstration.
 
 
+!New Diagram Types (mermaid 11.6.0)
+
+''Timeline:''
+```
+timeline
+    title History of Social Media
+    2002 : LinkedIn
+    2004 : Facebook
+    2006 : Twitter
+```
+
+''Sankey Diagram:''
+```
+sankey-beta
+Agricultural 'waste',Bio-energy,124.729
+Bio-energy,Electricity grid,29.544
+```
+
+''XY Chart (2D Plot):''
+```
+xychart-beta
+    title "Sales Revenue"
+    x-axis [jan, feb, mar, apr, may]
+    y-axis "Revenue (in $)" 4000 --> 11000
+    bar [5000, 6000, 7500, 8200, 9500]
+    line [5000, 6000, 7500, 8200, 9500]
+```
+
+''Radar Chart:''
+```
+radar-beta
+    title "Student Skills"
+    axis Math, Science, English, History, Art
+    curve a: 90, 85, 70, 60, 95
+    curve b: 75, 90, 80, 85, 70
+```
+
+!Export as PNG/PDF
+
+Each rendered diagram includes "Save as PNG" and "Save as PDF" buttons at the bottom right of the diagram.
+
+* ''Save as PNG'': Downloads the diagram as a PNG image file.
+* ''Save as PDF'': Opens the diagram in a new window with a print dialog, allowing you to save it as a PDF.
+
 !Troubleshooting
 
 *When in doubt, please create a test case by creating a tiddler that has ``type=text/vnd.tiddlywiki.mermaid`` and contains ''only'' mermaid commands (no TW markup or other contents)

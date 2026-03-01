@@ -1,6 +1,29 @@
 title: $:/plugins/orange/mermaid-tw5/readme
 
-This is a TiddlyWiki plugin for using [[mermaid.js|https://github.com/mermaid-js/mermaid]].  It is completely self-contained, and doesn't need an Internet connection in order to work. It works both in the browser and under Node.js. It is currently based on [[mermaid.js 9.3.0|https://github.com/mermaid-js/mermaid/releases/tag/v9.3.0]]
+This is a TiddlyWiki plugin for using [[mermaid.js|https://github.com/mermaid-js/mermaid]].  It is completely self-contained, and doesn't need an Internet connection in order to work. It works both in the browser and under Node.js. It is currently based on [[mermaid.js 11.6.0|https://github.com/mermaid-js/mermaid/releases/tag/v11.6.0]]
+
+!Supported Diagram Types
+
+* Flowcharts / Graphs
+* Sequence Diagrams
+* Class Diagrams
+* State Diagrams
+* Entity Relationship Diagrams
+* Gantt Charts
+* Pie Charts
+* Gitgraph Diagrams
+* User Journey Diagrams
+* C4 Diagrams
+* Requirement Diagrams
+* Mindmaps
+* Timeline Diagrams (new)
+* Sankey Diagrams (new)
+* XY Charts / 2D Plots (new)
+* Radar Charts (new)
+
+!Export
+
+Each rendered diagram has "Save as PNG" and "Save as PDF" buttons for exporting.
 
 
 !Installation
