@@ -1,0 +1,4 @@
+flowchart LR
+    A["[[Flowchart]]"] --> B["[[Gitgraph Base Theme|Git Base]]"] --> C["[[sequenceDiagram 1]]"]
+    D["[[Automata]]"] --> E["[[Class diagrams]]"]
+    F["[[Section: Introduction|Intro (colon test)]]"] --> G["[[2024: Year Review]]"]
