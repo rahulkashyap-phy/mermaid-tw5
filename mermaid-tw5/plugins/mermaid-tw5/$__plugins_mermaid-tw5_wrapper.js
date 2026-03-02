@@ -176,7 +176,10 @@ modified: E Furlan 2022-05-08
                                   newLine.substring(idx + m[0].length);
                     }
 
-                    var safeTarget = firstTarget.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                    // URL-encode the tiddler title so characters like ':' and
+                    // spaces work reliably in TW5's hash-based navigation.
+                    var encodedTarget = encodeURIComponent(firstTarget);
+                    var safeTarget    = firstTarget.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
                     // Skip if a click directive for this node already exists in the
                     // original source or in our pending list.
                     var clickRe = new RegExp('\\bclick\\s+' + nodeId + '\\s');
@@ -185,8 +188,12 @@ modified: E Furlan 2022-05-08
                         return d.indexOf('click ' + nodeId + ' ') === 0;
                     });
                     if (!alreadyInSource && !alreadyPending) {
+                        // Format: click nodeId "#encodedUrl" "tooltip" _self
+                        // The LINK_TARGET (_self) is required by mermaid's grammar
+                        // when both a URL and a tooltip are present; omitting it
+                        // produces "Syntax error in text" in mermaid 11.6.0.
                         clickDirectives.push(
-                            'click ' + nodeId + ' "#' + safeTarget + '" "' + safeTarget + '"'
+                            'click ' + nodeId + ' "#' + encodedTarget + '" "' + safeTarget + '" _self'
                         );
                     }
                 }
